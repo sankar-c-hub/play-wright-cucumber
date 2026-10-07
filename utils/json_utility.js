@@ -20,6 +20,11 @@ class JsonUtility {
         return config[key];
     }
 
+    static getConfigValueOrDefault(key, defaultValue) {
+        const config = this.loadJson('config.json');
+        return key in config ? config[key] : defaultValue;
+    }
+
     // Get value from locators.json
     static getLocator(pageName, locatorName) {
         const locators = this.loadJson('locators.json');

@@ -1,47 +1,61 @@
-const reporter = require('cucumber-html-reporter');
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { formatRunTimestamp, ensureRunFolders } = require('./utils/report_paths.js');
 
-// Get the latest report directory
-const reportsDir = './reports';
-const dirs = fs.readdirSync(reportsDir).filter(file => {
-  return fs.statSync(path.join(reportsDir, file)).isDirectory();
-});
-
-if (dirs.length === 0) {
-  console.log('No reports found');
-  process.exit(0);
+function run(command, extraEnv = {}) {
+  return spawnSync(command, {
+    stdio: 'inherit',
+    shell: true,
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      ...extraEnv
+    }
+  });
 }
 
-// Sort directories by timestamp (newest first)
-dirs.sort().reverse();
-const latestDir = dirs[0];
+function main() {
+  const timestamp = formatRunTimestamp();
+  const { resultsDir, reportDir, runDir } = ensureRunFolders(timestamp);
 
-const jsonFile = path.join(reportsDir, latestDir, 'cucumber-report.json');
-const htmlFile = path.join(reportsDir, latestDir, 'cucumber-report.html');
+  console.log(`Allure run folder: ${runDir}`);
 
-if (!fs.existsSync(jsonFile)) {
-  console.log('JSON report not found');
-  process.exit(0);
-}
+  const cucumber = run('npx cucumber-js', {
+    ALLURE_RUN_TIMESTAMP: timestamp,
+    ALLURE_RESULTS_DIR: resultsDir
+  });
+  const cucumberStatus = cucumber.status ?? 1;
 
-const options = {
-  theme: 'bootstrap',
-  jsonFile: jsonFile,
-  output: htmlFile,
-  reportSuiteAsScenarios: true,
-  scenarioTimestamp: true,
-  launchReport: false,
-  metadata: {
-    'App Version': '1.0.0',
-    'Test Environment': 'STAGING',
-    'Browser': 'Chrome',
-    'Platform': 'Windows 11',
-    'Parallel': 'Scenarios',
-    'Executed': 'Local'
+  const hasResults =
+    fs.existsSync(resultsDir) && fs.readdirSync(resultsDir).length > 0;
+
+  if (!hasResults) {
+    console.error('No Allure results were produced. Skipping report generation.');
+    process.exit(cucumberStatus);
   }
-};
 
-reporter.generate(options);
+  let generate = run(
+    `npx allure generate "${resultsDir}" -o "${reportDir}" --clean --single-file`
+  );
 
-console.log(`Report generated at: ${htmlFile}`);
+  if (generate.status !== 0) {
+    generate = run(
+      `npx allure generate "${resultsDir}" -o "${reportDir}" --clean`
+    );
+  }
+
+  if (generate.status !== 0) {
+    console.error(
+      'Failed to generate the Allure report. Allure CLI requires Java (JRE 8+).'
+    );
+    process.exit(cucumberStatus !== 0 ? cucumberStatus : generate.status);
+  }
+
+  const reportPath = path.join(reportDir, 'index.html');
+  console.log(`Allure report generated at: ${reportPath}`);
+  console.log('Open the report manually in a browser when you want to view it.');
+  process.exit(cucumberStatus);
+}
+
+main();

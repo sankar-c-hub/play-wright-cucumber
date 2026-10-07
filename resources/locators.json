@@ -2,6 +2,16 @@
   "Home Page": {
     "loginPagepagetitle": "login"
   },
+  "Login": {
+    "Birthpop": ".show-element",
+    "loginiconID": "#account-button[data-test-id='desktop-account-button']",
+    "BeforeloginButtonXPATH": "[data-test-id='login-button']",
+    "loginwithEmailButtonXPATH": "//div[text()='Login with Email and Password']",
+    "usernameInputXPATH": "(//input[@name='email'])[1]",
+    "passwordInputXPATH": "(//input[@name='password'])[1]",
+    "logoutButtonXPATH": "//a[contains(.,'Log out')]",
+    "loginPagepagetitle": "login"
+  },
   "Demo Web Shop": {
     "BooksLinkXPATH": "(//a[contains(.,'Books')])[1]",
     "ComputersLinkXPATH": "(//a[contains(.,'Computers')])[1]",

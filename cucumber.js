@@ -1,24 +1,38 @@
+const os = require('os');
 const JsonUtility = require('./utils/json_utility.js');
-const timestamp = new Date().toISOString().replace(/:/g, '-').split('.')[0];
+const { ensureRunFolders } = require('./utils/report_paths.js');
 
 const isParallelEnabled = JsonUtility.getConfigValue('parallel') === true;
+const config = JsonUtility.loadJson('config.json');
+const { resultsDir } = ensureRunFolders();
 
 module.exports = {
   default: {
     require: [
-      './step-definitions/**/*.js',
+      'allure-cucumberjs',
+      './step_definitions/**/*.js',
       './common/**/*.js'
     ],
     paths: ['features/**/*.feature'],
 
-    // 👇 Conditional Parallel
     ...(isParallelEnabled && { parallel: 5 }),
+
+    strict: true,
 
     format: [
       'progress',
-      `json:reports/${timestamp}/cucumber-report.json`,
-      `html:reports/${timestamp}/cucumber-report.html`
+      './allure_cucumber_reporter.js'
     ],
+    formatOptions: {
+      resultsDir,
+      environmentInfo: {
+        Browser: config.browser || 'Chrome',
+        Platform: `${os.platform()} ${os.release()}`,
+        Environment: config.url || '',
+        Node: process.version,
+        Project: config.projectname || ''
+      }
+    },
 
     publishQuiet: true
   }

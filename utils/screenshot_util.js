@@ -1,9 +1,25 @@
-const fs = require('fs');
-const path = require('path');
+const JsonUtility = require('./json_utility.js');
 
 class ScreenshotUtil {
 
      static logMessages = [];
+
+    static isFullPage() {
+        const mode = String(JsonUtility.getConfigValueOrDefault('screenshot', 'fullPage')).trim().toLowerCase();
+        return mode !== 'normal';
+    }
+
+    static getScreenshotOptions(extraOptions = {}) {
+        return {
+            fullPage: this.isFullPage(),
+            ...extraOptions
+        };
+    }
+
+    static async captureBuffer(page, extraOptions = {}) {
+        return await page.screenshot(this.getScreenshotOptions(extraOptions));
+    }
+
     /**
      * Capture screenshot for Cucumber (using World context)
      * @param {Object} page - Playwright page object
@@ -12,8 +28,7 @@ class ScreenshotUtil {
      */
     static async captureForCucumber(page, world) {
         try {
-            const screenshot = await page.screenshot({ fullPage: true });
-            // Attach to Cucumber report
+            const screenshot = await this.captureBuffer(page);
             await world.attach(screenshot, 'image/png');
         } catch (error) {
             console.error(`Failed to capture screenshot: ${error.message}`);

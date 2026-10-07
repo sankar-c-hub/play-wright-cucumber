@@ -1,10 +1,22 @@
 const { BeforeAll, AfterAll, Before, After, setDefaultTimeout, BeforeStep, AfterStep, Status } = require('@cucumber/cucumber');
-const JsonUtility = require('../utils/json_utility.js');
-const BrowserManager = require('../common/browser-manager.js');
+const BrowserManager = require('../common/browser_manager.js');
 const ScreenshotUtil = require('../utils/screenshot_util.js');
+const AllureHelper = require('../common/allure_helper.js');
 
 // Increase timeout to 60 seconds
 setDefaultTimeout(60000);
+
+function isVerifyGwtStep(pickleStep) {
+    return (pickleStep?.text || '').toLowerCase().includes('verify');
+}
+
+async function attachScreenshotToCurrentStep(world, page, name) {
+    const screenshot = await ScreenshotUtil.captureBuffer(page);
+    if (world && typeof world.attach === 'function') {
+        await world.attach(screenshot, 'image/png');
+    }
+    await AllureHelper.addScreenshot(screenshot, name);
+}
 
 
 BeforeAll(async function () {
@@ -19,31 +31,41 @@ Before(async function () {
 });
 
 BeforeStep(async function ({ pickleStep }) {
-    const stepText = pickleStep.text.toLowerCase();
+    this._isVerifyStep = isVerifyGwtStep(pickleStep);
 });
 
-AfterStep(async function ({ result, pickleStep, gherkinDocument }) {
+AfterStep(async function ({ result, pickleStep }) {
 
     const page = BrowserManager.getPage();
     const stepText = pickleStep.text;
-    const stepTextLower = stepText.toLowerCase();
     const log = ScreenshotUtil.logMessages.join('\n');
     if (log) {
         await ScreenshotUtil.addingLogCucumber(page, this, log);
         ScreenshotUtil.logMessages = [];
     }
 
-    // 🔎 Get keyword directly in a simpler way
-    const stepKeyword = gherkinDocument.feature.children
-        .flatMap(child => child.scenario?.steps || [])
-        .find(step => step.text === stepText)?.keyword?.trim() || '';
-
     const isFailed = result.status === Status.FAILED;
-    const isThenStep = stepKeyword === 'Then';
-    const isVerifyStep = stepTextLower.includes('verify');
+    const isUndefined = result.status === Status.UNDEFINED;
+    const isAmbiguous = result.status === Status.AMBIGUOUS;
+    const isMissingStep = isUndefined || isAmbiguous;
+    const isVerifyStep = this._isVerifyStep || isVerifyGwtStep(pickleStep);
 
-    if (isFailed || isThenStep || isVerifyStep) {
+    if (isVerifyStep) {
+        await attachScreenshotToCurrentStep(this, page, `Verify - ${stepText}`);
+    } else if (isFailed || isMissingStep) {
         await ScreenshotUtil.captureForCucumber(page, this, stepText);
+    }
+
+    if (isFailed && result.message) {
+        await AllureHelper.addError(new Error(result.message), stepText);
+    }
+
+    if (isMissingStep) {
+        const reason = isAmbiguous
+            ? `Ambiguous step (multiple matching definitions): ${stepText}`
+            : `Undefined step (no matching step definition): ${stepText}`;
+        await AllureHelper.addError(new Error(reason), stepText);
+        throw new Error(reason);
     }
 });
 

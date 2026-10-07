@@ -1,5 +1,5 @@
 {
-    "url": "https://demowebshop.tricentis.com",
+    "url": "https://in.puma.com/",
     "browser": "Chrome",
     "headless": false,
     "projectname": "web automation using playwright javascript",
@@ -8,5 +8,6 @@
     "runOn": "local",
     "lambdatest": "LT_USERNAME,LT_ACCESS_KEY",
     "dockerport": "0.0.0.0:4000",
-    "docker": false
+    "docker": false,
+    "screenshot": "normal"
 }
