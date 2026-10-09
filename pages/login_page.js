@@ -21,6 +21,10 @@ export class LoginPage extends BasePage {
         return this.getElement('Login', 'loginwithEmailButtonXPATH');
     }
 
+    get loginLink() {
+        return this.getElement('Login', 'loginLinkXPATH');
+    }
+
     get usernameInput() {
         return this.getElement('Login', 'usernameInputXPATH');
     }
@@ -33,7 +37,38 @@ export class LoginPage extends BasePage {
         return this.getElement('Login', 'loginButtonXPATH');
     }
 
+    get userAccountLink() {
+        return this.getElement('Login', 'userAccountLinkXPATH');
+    }
+
+    get customerInfoHeading() {
+        return this.getElement('Login', 'customerInfoHeadingXPATH');
+    }
+
     get logoutButton() {
         return this.getElement('Login', 'logoutButtonXPATH');
+    }
+
+    get errorMessage() {
+        return this.getElement('Login', 'errorMessageXPATH');
+    }
+
+    get emailValidationError() {
+        return this.getElement('Login', 'emailValidationErrorXPATH');
+    }
+
+    get rememberMeCheckbox() {
+        return this.getElement('Login', 'rememberMeCheckboxXPATH');
+    }
+
+    get forgotPasswordLink() {
+        return this.getElement('Login', 'forgotPasswordLinkXPATH');
+    }
+
+    getUserAccountLink(email) {
+        if (email) {
+            return this.page.locator(`//a[contains(@class,'account') and normalize-space()='${email}'] | //a[normalize-space()='${email}']`);
+        }
+        return this.userAccountLink;
     }
 }
