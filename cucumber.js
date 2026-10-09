@@ -8,8 +8,8 @@ const { resultsDir } = ensureRunFolders();
 
 module.exports = {
   default: {
+    requireModule: ['allure-cucumberjs'],
     require: [
-      'allure-cucumberjs',
       './step_definitions/**/*.js',
       './common/**/*.js'
     ],
@@ -20,6 +20,7 @@ module.exports = {
     strict: true,
 
     format: [
+      'summary',
       'progress',
       './allure_cucumber_reporter.js'
     ],

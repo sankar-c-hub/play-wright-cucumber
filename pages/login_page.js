@@ -1,6 +1,6 @@
-import { BasePage } from './base_page.js';
+const { BasePage } = require('./base_page.js');
 
-export class LoginPage extends BasePage {
+class LoginPage extends BasePage {
 
     constructor(page) {
         super(page); // 🔥 very important
@@ -72,3 +72,5 @@ export class LoginPage extends BasePage {
         return this.userAccountLink;
     }
 }
+
+module.exports = { LoginPage };

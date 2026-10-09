@@ -1,10 +1,9 @@
-import { Given, When, Then } from '@cucumber/cucumber';
-import { expect } from '@playwright/test';
-import { LoginPage } from '../pages/login_page.js';
-import JsonUtility from '../utils/json_utility.js';
-import BrowserActions from '../common/browser_actions.js';
-
-import ScreenshotUtil from '../utils/screenshot_util.js';
+const { Given, When, Then } = require('@cucumber/cucumber');
+const { expect } = require('@playwright/test');
+const { LoginPage } = require('../pages/login_page.js');
+const JsonUtility = require('../utils/json_utility.js');
+const BrowserActions = require('../common/browser_actions.js');
+const ScreenshotUtil = require('../utils/screenshot_util.js');
 
 Given('I have access to application', async function () {
   const url = JsonUtility.getConfigValue('url');

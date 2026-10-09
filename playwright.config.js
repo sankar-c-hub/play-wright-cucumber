@@ -1,6 +1,6 @@
-import { defineConfig } from '@playwright/test';
+const { defineConfig } = require('@playwright/test');
 
-export default defineConfig({
+module.exports = defineConfig({
   use: {
     headless: false,
     screenshot: 'on',

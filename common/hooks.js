@@ -24,10 +24,15 @@ BeforeAll(async function () {
 });
 
 Before(async function () {
-    await BrowserManager.launchBrowser();
-    console.log('Browser launched successfully');
-    await BrowserManager.createContext();
-    this.page = BrowserManager.getPage();
+    try {
+        await BrowserManager.launchBrowser();
+        console.log('Browser launched successfully');
+        await BrowserManager.createContext();
+        this.page = BrowserManager.getPage();
+    } catch (error) {
+        console.error(`❌ Before hook failed: ${error.message}`);
+        throw error;
+    }
 });
 
 BeforeStep(async function ({ pickleStep }) {
@@ -72,8 +77,6 @@ AfterStep(async function ({ result, pickleStep }) {
 After(async function () {
     await new Promise(resolve => setTimeout(resolve, 1000));
     await BrowserManager.closeBrowser();
-    console.log('Browser closed successfully');
-
 });
 
 AfterAll(async function () {

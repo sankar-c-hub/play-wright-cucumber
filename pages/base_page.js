@@ -1,6 +1,7 @@
-import JsonUtility from '../utils/json_utility.js';
+const JsonUtility = require('../utils/json_utility.js');
+const { expect } = require('@playwright/test');
 
-export class BasePage {
+class BasePage {
     constructor(page) {
         this.page = page;
     }
@@ -22,3 +23,5 @@ export class BasePage {
         return this.page.locator(locatorValue);
     }
 }
+
+module.exports = { BasePage };

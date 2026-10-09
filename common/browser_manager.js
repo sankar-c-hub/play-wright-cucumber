@@ -144,6 +144,7 @@ class BrowserManager {
             if (this.browser) {
                 await this.browser.close();
                 this.browser = null;
+                console.log('Browser closed successfully');
             }
         } catch (error) {
             console.error('Error closing browser:', error.message);
