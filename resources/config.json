@@ -1,5 +1,5 @@
 {
-    "url": "https://in.puma.com/",
+    "url": "https://demowebshop.tricentis.com/",
     "browser": "Chrome",
     "headless": false,
     "projectname": "web automation using playwright javascript",
