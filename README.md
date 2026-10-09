@@ -4,25 +4,24 @@
 
 This repository is an end-to-end test automation framework using:
 
-- Playwright
-- Cucumber (BDD)
-- Node.js / JavaScript
-- Allure reporting
+- **Playwright** (browser automation)
+- **Cucumber.js** (Behavior-Driven Development / Gherkin)
+- **Node.js / JavaScript**
+- **Allure Reporting** (visual test execution reports)
 
-It follows the Page Object Model (POM) and supports:
+It follows the Page Object Model (POM) and features:
 
-- Behavior-Driven Development (BDD)
-- Modular architecture
-- Centralized browser management
-- Screenshots on failure and GWT steps that contain `verify`
-- Step-level logging
-- Timestamped Allure HTML reports (generated automatically after `npm test`; open manually)
-
-A missing GWT step definition fails the scenario. Cucumber and Allure both mark that test as **Failed**.
+- Behavior-Driven Development (BDD) with Cucumber feature files
+- Modular architecture with centralized locator management (`resources/locators.json`)
+- Centralized browser management (`Chrome`, `Chromium`, `Firefox`, `WebKit`)
+- Automatic screenshots on failure and on verification steps containing `verify`
+- Step-level logging wrapped with Allure step metadata
+- Timestamped Allure HTML reports generated automatically after test execution
+- Strict step validation (undefined or ambiguous steps fail scenarios automatically)
 
 ---
 
-## Project structure
+## Project Structure
 
 ```text
 project-root
@@ -31,40 +30,45 @@ project-root
 │   ├── browser_actions.js
 │   ├── hooks.js
 │   └── allure_helper.js
-├── features/                    # Gherkin feature files
-├── step_definitions/            # Cucumber step implementations
+├── features/                    # Gherkin feature files (.feature)
+│   └── Login.feature
+├── step_definitions/            # Cucumber step definition implementations
+│   └── login_step_definition.js
 ├── pages/                       # Page Object Model classes
-├── utils/                       # Screenshot, JSON, report path helpers
-├── resources/                   # config.json, locators.json, allure.properties
-├── reports/                     # Timestamped Allure output (created at runtime)
+│   ├── base_page.js
+│   └── login_page.js
+├── utils/                       # Screenshot, JSON, and report path utilities
+│   ├── json_utility.js
+│   ├── screenshot_util.js
+│   ├── display_util.js
+│   └── report_paths.js
+├── resources/                   # Configurations, locators, and properties
+│   ├── config.json
+│   ├── locators.json
+│   └── allure.properties
+├── reports/                     # Timestamped Allure execution runs (runtime)
 │   └── <YYYYMMDD_HHMMSS>/
 │       ├── allure-results/
 │       └── allure-report/
-├── cucumber.js                  # Cucumber runner + Allure reporter
-├── allure_cucumber_reporter.js  # Allure reporter (undefined steps = Failed)
-├── playwright.config.js
-├── generate-report.js           # Runs tests, then generates the Allure HTML report
-├── package.json
+├── cucumber.js                  # Cucumber runner configuration
+├── allure_cucumber_reporter.js  # Allure reporter hook
+├── playwright.config.js         # Playwright configuration
+├── generate-report.js           # Executes tests & generates Allure HTML report
+├── package.json                 # Node.js dependencies and scripts
 └── README.md
 ```
 
 ---
 
-# JavaScript Playwright
+## Prerequisites & Environment Setup
 
-This is the stack used by **this repository**.
+| Tool | Recommended Version | Purpose |
+| :--- | :--- | :--- |
+| **Node.js** | v18+ (v16+ minimum) | JavaScript runtime & npm package manager |
+| **Java (JRE/JDK)** | 8 or newer (17+ recommended) | **Required solely by Allure CLI** to generate & serve HTML reports |
+| **Git** | Recent version | Version control |
 
-## Environment setup
-
-Install:
-
-| Tool | Version | Notes |
-| --- | --- | --- |
-| Node.js | v18 or newer (v16+ minimum) | Includes npm |
-| Java (JRE/JDK) | 8 or newer (17+ recommended) | Required by Allure CLI to **generate** the HTML report |
-| Git | any recent | Clone the repo |
-
-Confirm:
+Verify your environment:
 
 ```bash
 node -v
@@ -72,250 +76,136 @@ npm -v
 java -version
 ```
 
-## Dependencies
+> **Note:** Java is **not** used for test execution or browser automation. It is required exclusively by the `allure-commandline` binary to generate the Allure HTML report from raw results.
 
-Installed via npm (`package.json`):
+---
 
-- `@cucumber/cucumber`
-- `@playwright/test` / Playwright browsers
-- `allure-cucumberjs`
-- `allure-js-commons`
-- `allure-commandline`
+## Installation
 
-Application URL, browser, and headless mode are set in `resources/config.json`.
+1. Clone the repository and navigate to the root directory:
+   ```bash
+   git clone <repository-url>
+   cd play-wright-cucumber
+   ```
 
-Screenshot type:
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Install Playwright browser binaries:
+   ```bash
+   npx playwright install
+   ```
+   *(Or run the combined setup command: `npm run setup`)*
+
+---
+
+## Configuration (`resources/config.json`)
+
+Framework runtime settings are controlled in `resources/config.json`:
 
 ```json
-"screenshot": "fullPage"
+{
+    "url": "https://demowebshop.tricentis.com/",
+    "browser": "Chrome",
+    "headless": false,
+    "projectname": "web automation using playwright javascript",
+    "parallel": false,
+    "runOn": "local",
+    "screenshot": "normal"
+}
 ```
 
-- `fullPage` — capture the complete webpage
-- `normal` — capture only the visible viewport
+- **`url`**: Target application entry URL.
+- **`browser`**: `Chrome`, `chromium`, `firefox`, or `webkit`.
+- **`headless`**: `false` to view browser execution, `true` for headless mode.
+- **`screenshot`**: `normal` (viewport) or `fullPage`.
 
-The browser window is maximized to the current machine’s screen size (no hardcoded width/height). This applies to local Windows, Linux VMs, cloud/grid sessions, and headless runs (`SCREEN_WIDTH` / `SCREEN_HEIGHT` can also be set).
+---
 
-## Install
+## Test Execution
 
-```bash
-git clone <repository-url>
-cd <project-folder>
-npm install
-npx playwright install
-```
-
-Or:
-
-```bash
-npm run setup
-```
-
-## Run tests
-
-Run all features (also generates Allure HTML):
+### 1. Run all tests and generate Allure HTML report
 
 ```bash
 npm test
 ```
 
-Run one feature file (Cucumber only; use `npm test` when you also want the HTML report):
+This command runs `node generate-report.js`, which:
+1. Creates a unique timestamped folder under `reports/<YYYYMMDD_HHMMSS>/`.
+2. Executes all Cucumber feature files using Playwright.
+3. Writes raw test results to `allure-results/`.
+4. Automatically generates the interactive HTML report at `allure-report/index.html`.
+5. Outputs the exact path to open the report.
 
-```bash
-npx cucumber-js features/Login.feature
-```
+### 2. Run specific feature or tags (Cucumber runner)
 
-Filter by tag:
+- **Run a single feature file:**
+  ```bash
+  npx cucumber-js features/Login.feature
+  ```
 
-```bash
-npx cucumber-js --tags "@smoke"
-```
+- **Filter by tag:**
+  ```bash
+  npx cucumber-js --tags "@smoke"
+  npx cucumber-js --tags "@negative"
+  npx cucumber-js --tags "@smoke or @regression"
+  ```
 
-`npm test` does the following:
+- **Run a single scenario by tag:**
+  ```bash
+  npx cucumber-js --tags "@test001"
+  ```
 
-1. Creates a new timestamp folder under `reports/` (previous runs are kept)
-2. Runs Cucumber + Playwright
-3. Writes Allure results to `reports/<YYYYMMDD_HHMMSS>/allure-results/`
-4. Generates HTML at `reports/<YYYYMMDD_HHMMSS>/allure-report/index.html`
-5. Prints the report path (the browser is **not** opened automatically)
-
-Undefined or ambiguous GWT steps fail the scenario and appear as **Failed** in Allure.
-
-## Allure report (JavaScript)
-
-### Generate (already part of `npm test`)
-
-```bash
-npm test
-```
-
-Generate HTML from an existing results folder:
-
-```bash
-npx allure generate "reports/<YYYYMMDD_HHMMSS>/allure-results" -o "reports/<YYYYMMDD_HHMMSS>/allure-report" --clean
-```
-
-Optional single-file HTML (easier to open as a file):
-
-```bash
-npx allure generate "reports/<YYYYMMDD_HHMMSS>/allure-results" -o "reports/<YYYYMMDD_HHMMSS>/allure-report" --clean --single-file
-```
-
-### Open (manual)
-
-Open this file in a browser:
-
-```text
-reports/<YYYYMMDD_HHMMSS>/allure-report/index.html
-```
-
-Or serve it with Allure:
-
-```bash
-npx allure open "reports/<YYYYMMDD_HHMMSS>/allure-report"
-```
-
-```bash
-npx allure serve "reports/<YYYYMMDD_HHMMSS>/allure-results"
-```
-
-`allure serve` builds a temporary report and opens it.
+- **Dry-run (validate step definitions without launching browser):**
+  ```bash
+  npx cucumber-js features/Login.feature --dry-run
+  ```
 
 ---
 
-# Java Playwright
+## Allure Reporting
 
-Use this section when you run **Java** Playwright + Cucumber + Allure in a Maven (or Gradle) project. It is separate from this Node.js repo.
+### Report Locations
 
-## Environment setup
-
-Install:
-
-| Tool | Version | Notes |
-| --- | --- | --- |
-| JDK | 17 or newer recommended | `JAVA_HOME` must point at the JDK |
-| Maven | 3.8+ | Or Gradle 8+ |
-| Java (same JDK) | 17+ | Also used by Allure CLI |
-
-Confirm:
-
-```bash
-java -version
-mvn -version
-```
-
-On Windows, set `JAVA_HOME` to the JDK folder and add `%JAVA_HOME%\bin` to `PATH`.
-
-## Dependencies (Maven)
-
-Typical `pom.xml` libraries:
-
-- `com.microsoft.playwright:playwright`
-- `io.cucumber:cucumber-java`
-- `io.cucumber:cucumber-junit` (or `cucumber-testng`)
-- `io.qameta.allure:allure-cucumber7-jvm` (match your Cucumber version)
-- `io.qameta.allure:allure-maven` (plugin) and/or Allure Commandline
-
-Install Playwright browser binaries once:
-
-```bash
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
-```
-
-Or from a small Java main that calls `Playwright.create()`.
-
-## Project layout (typical Java)
-
-```text
-src/test/java/          # step definitions, hooks, page objects
-src/test/resources/     # .feature files, cucumber.properties, allure.properties
-```
-
-`cucumber.properties` / plugin example:
-
-```text
-cucumber.plugin=io.qameta.allure.cucumber7jvm.AllureCucumber7Jvm
-```
-
-`allure.properties`:
-
-```text
-allure.results.directory=target/allure-results
-```
-
-Fail on undefined steps (JUnit):
-
-```text
-cucumber.publish.quiet=true
-cucumber.execution.strict=true
-```
-
-Or pass `--strict` / equivalent in the Cucumber runner so missing step definitions fail the build.
-
-## Run tests (Java)
-
-```bash
-mvn clean test
-```
-
-One feature or tag (example):
-
-```bash
-mvn test -Dcucumber.features="src/test/resources/features/Login.feature"
-mvn test -Dcucumber.filter.tags="@smoke"
-```
-
-Gradle:
-
-```bash
-./gradlew test
-```
-
-## Allure report (Java)
-
-After tests, results are usually in `target/allure-results` (Maven) or `build/allure-results` (Gradle).
-
-Generate HTML:
-
-```bash
-mvn allure:report
-```
-
-Output is typically `target/site/allure-maven-plugin/` (or the directory configured in `allure-maven`).
-
-Open with the Allure Maven plugin:
-
-```bash
-mvn allure:serve
-```
-
-Or with Allure Commandline (Java required):
-
-```bash
-allure generate target/allure-results -o target/allure-report --clean
-allure open target/allure-report
-```
-
-```bash
-allure serve target/allure-results
-```
-
----
-
-## Allure contents (this JavaScript framework)
-
-- Scenario and step status (passed / failed / skipped)
-- Missing step definitions reported as **Failed**
-- Nested Playwright actions as Allure steps (`BrowserActions`)
-- Screenshots on GWT steps whose text contains `verify` (case-insensitive)
-- Screenshots on failed and undefined steps
-- Step logs and failure details as attachments
-- Environment info (browser, OS, URL, Node)
-
-### Report locations (JavaScript)
+Allure test results and reports are saved per execution under timestamped folders:
 
 ```text
 reports/
-  20261007_142500/
-    allure-report/
-    allure-results/
+  └── <YYYYMMDD_HHMMSS>/
+        ├── allure-results/    # Raw JSON/XML result files
+        └── allure-report/     # Generated static HTML report
 ```
+
+### Viewing Reports
+
+1. **Directly in browser:**
+   Open the generated file in any browser:
+   ```text
+   reports/<YYYYMMDD_HHMMSS>/allure-report/index.html
+   ```
+
+2. **Serve report via Allure CLI:**
+   ```bash
+   npx allure open "reports/<YYYYMMDD_HHMMSS>/allure-report"
+   ```
+
+3. **Serve directly from raw results:**
+   ```bash
+   npx allure serve "reports/<YYYYMMDD_HHMMSS>/allure-results"
+   ```
+
+4. **Manually generate HTML from existing results:**
+   ```bash
+   npx allure generate "reports/<YYYYMMDD_HHMMSS>/allure-results" -o "reports/<YYYYMMDD_HHMMSS>/allure-report" --clean
+   ```
+
+### Allure Features Included
+
+- Comprehensive scenario and step status (`Passed`, `Failed`, `Skipped`).
+- Undefined or missing step definitions automatically reported as **Failed**.
+- Detailed action logs for Playwright interactions via `BrowserActions`.
+- Automatic screenshots attached on failed steps.
+- Automatic screenshots attached for steps containing `verify` in their description.
+- Environment metadata (Browser, OS platform, target URL, Node.js version).
