@@ -126,86 +126,47 @@ Framework runtime settings are controlled in `resources/config.json`:
 
 ## Test Execution
 
-### 1. Run all tests and generate Allure HTML report
+### 1. Run Tests with Allure Report Generation
 
-```bash
-npm test
-```
+- **Run all tests:**
+  ```bash
+  npm test
+  ```
 
-This command runs `node generate-report.js`, which:
-1. Creates a unique timestamped folder under `reports/<YYYYMMDD_HHMMSS>/`.
-2. Executes all Cucumber feature files using Playwright.
-3. Writes raw test results to `allure-results/`.
-4. Automatically generates the interactive HTML report at `allure-report/index.html`.
-5. Outputs the exact path to open the report.
+- **Run specific scenario or tags:**
+  ```bash
+  npm test -- --tags "@sort001"
+  npm test -- --tags "@smoke"
+  npm test -- --tags "@negative"
+  ```
 
-### 2. Run specific feature or tags (Cucumber runner)
+### 2. Run with Cucumber Runner Directly
+
+- **Run by tag:**
+  ```bash
+  npx cucumber-js --tags "@sort001"
+  npx cucumber-js --tags "@smoke"
+  ```
 
 - **Run a single feature file:**
   ```bash
   npx cucumber-js features/Login.feature
   ```
 
-- **Filter by tag:**
-  ```bash
-  npx cucumber-js --tags "@smoke"
-  npx cucumber-js --tags "@negative"
-  npx cucumber-js --tags "@smoke or @regression"
-  ```
-
-- **Run a single scenario by tag:**
-  ```bash
-  npx cucumber-js --tags "@test001"
-  ```
-
 - **Dry-run (validate step definitions without launching browser):**
   ```bash
-  npx cucumber-js features/Login.feature --dry-run
+  npx cucumber-js --dry-run
   ```
 
 ---
 
 ## Allure Reporting
 
-### Report Locations
-
-Allure test results and reports are saved per execution under timestamped folders:
+Allure HTML reports are generated automatically after execution under:
 
 ```text
-reports/
-  └── <YYYYMMDD_HHMMSS>/
-        ├── allure-results/    # Raw JSON/XML result files
-        └── allure-report/     # Generated static HTML report
+reports/<YYYYMMDD_HHMMSS>/allure-report/index.html
 ```
 
-### Viewing Reports
+Open `index.html` in any browser to view the interactive test execution report with screenshots, steps, and logs.
 
-1. **Directly in browser:**
-   Open the generated file in any browser:
-   ```text
-   reports/<YYYYMMDD_HHMMSS>/allure-report/index.html
-   ```
-
-2. **Serve report via Allure CLI:**
-   ```bash
-   npx allure open "reports/<YYYYMMDD_HHMMSS>/allure-report"
-   ```
-
-3. **Serve directly from raw results:**
-   ```bash
-   npx allure serve "reports/<YYYYMMDD_HHMMSS>/allure-results"
-   ```
-
-4. **Manually generate HTML from existing results:**
-   ```bash
-   npx allure generate "reports/<YYYYMMDD_HHMMSS>/allure-results" -o "reports/<YYYYMMDD_HHMMSS>/allure-report" --clean
-   ```
-
-### Allure Features Included
-
-- Comprehensive scenario and step status (`Passed`, `Failed`, `Skipped`).
-- Undefined or missing step definitions automatically reported as **Failed**.
-- Detailed action logs for Playwright interactions via `BrowserActions`.
-- Automatic screenshots attached on failed steps.
-- Automatic screenshots attached for steps containing `verify` in their description.
-- Environment metadata (Browser, OS platform, target URL, Node.js version).
