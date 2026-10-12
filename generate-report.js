@@ -21,7 +21,10 @@ function main() {
 
   console.log(`Allure run folder: ${runDir}`);
 
-  const cucumber = run('npx cucumber-js', {
+  const extraArgs = process.argv.slice(2).join(' ');
+  const cucumberCommand = extraArgs ? `npx cucumber-js ${extraArgs}` : 'npx cucumber-js';
+
+  const cucumber = run(cucumberCommand, {
     ALLURE_RUN_TIMESTAMP: timestamp,
     ALLURE_RESULTS_DIR: resultsDir
   });
